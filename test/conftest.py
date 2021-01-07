@@ -12,6 +12,7 @@ from configparser import ConfigParser
 
 def pytest_addoption(parser):
     parser.addini('project', 'path of a the lektor test project')
+    parser.addini('packages', 'plugins path to add', 'pathlist')
     parser.addini('port', 'http server port', default='5787')
 
 @pytest.fixture(scope='session')
@@ -23,7 +24,12 @@ def port(request):
     return int(request.config.getini('port'))
 
 @pytest.fixture(scope='session')
-def lektorproject(project_path):
+def packages(request):
+    return request.config.getini('packages')
+
+
+@pytest.fixture(scope='session')
+def lektorproject(project_path, packages):
     try:
         output_path = tempfile.mkdtemp()
         print(output_path)
@@ -33,8 +39,11 @@ def lektorproject(project_path):
         # add local modifications
         if os.path.isdir('test/site'):
             shutil.copytree('test/site', output_path, dirs_exist_ok=True)
-        # add current plugin
-        shutil.copytree('.', os.path.join(output_path,'packages/lektor-admin-utils'), ignore = shutil.ignore_patterns('test'), dirs_exist_ok=True)
+        # add packages and current plugin
+        testdir = shutil.ignore_patterns('test')
+        for p in packages:
+            shutil.copytree(p, os.path.join(output_path,'packages/'), ignore = testdir, dirs_exist_ok=True)
+        shutil.copytree('.', os.path.join(output_path,'packages/lektor-admin-utils'), ignore = testdir, dirs_exist_ok=True)
     except (OSError, IOError) as e:
         pytest.exit('FATAL: could not copy test site directory. %s', e) # error
 

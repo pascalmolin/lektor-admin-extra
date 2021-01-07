@@ -41,8 +41,8 @@ def add_content(contents, extra_routes=[]):
 class AdminExtraPlugin(Plugin):
     name = 'admin-extra'
     description = u'Add buttons on lektor admin pages.'
-    states = ['all', 'dash' ]
-    right_buttons = [ ]
+    right_buttons = { 'serve' : [], 'dash': [] }
+    bp = utilsbp
 
     def on_setup_env(self, *args, **extra):
 
@@ -57,7 +57,7 @@ class AdminExtraPlugin(Plugin):
         def after_request_serve(response):
             if response.mimetype == "text/html":
                 response.direct_passthrough = False
-                response.set_data(add_content(response.get_data(),self.buttons()))
+                response.set_data(add_content(response.get_data(),self.buttons('serve')))
             return response
 
         @dash.bp.after_request
@@ -65,13 +65,18 @@ class AdminExtraPlugin(Plugin):
         def after_request_dash(response):
             if response.mimetype == "text/html":
                 response.direct_passthrough = False
-                response.set_data(add_content(response.get_data(),self.buttons()))
+                response.set_data(add_content(response.get_data(),self.buttons('dash')))
             return response
 
-    def add_button(self, route, title, html_entity, ignore = None):
-        self.right_buttons.append( ((route, title, html_entity), ignore) )
+    def buttons(self, bp, **kwargs):
+        return [ b for b,f in self.right_buttons[bp] if f is None or f(**kwargs) ]
 
-    def buttons(self, **kwargs):
-        return [ b for b,f in self.right_buttons if f is None or f(**kwargs) ]
+    def add_button(self, route, title, html_entity, bp=['serve','dash'], ignore = None):
+        for b in bp:
+            self.right_buttons[b].append( ((route, title, html_entity), ignore) )
+    def add_serve_button(self, *args, **kwargs):
+        self.add_button(*args, bp=['serve'], **kwargs)
+    def add_dash_button(self, *args, **kwargs):
+        self.add_button(*args, bp=['dash'], **kwargs)
 
 
