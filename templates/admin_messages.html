@@ -1,0 +1,13 @@
+{% with messages = get_flashed_messages(with_categories=True) %}
+{% if messages %}
+<ul class="auth-flashes">
+{% for cat, message in messages %}
+  <li class="{{ cat }}">
+  <span aria-hidden="true" class="close-button" onclick='this.parentNode.parentNode.removeChild(this.parentNode); return false;'>
+    &times;</span>
+  {{ message }}
+  </li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endwith %}

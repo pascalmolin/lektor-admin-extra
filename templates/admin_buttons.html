@@ -1,0 +1,24 @@
+<div class="auth-button-div">
+  {% if session.get('token') %}
+  <a href="{{ url_for('auth.logout') }}" title="logout"><i class="fa fa-power-off"></i></a>
+  {#
+  <a href="{{ url_for('auth.logout') }}" title="logout">&#x23FB;</a>
+  <a href="{{ url_for('auth.logout') }}" title="logout">\uf011</a>
+  #}
+  {% endif %}
+  {% for (url, title, entity) in buttons %}
+  <a href="{{ url }}" title="{{ title }}">{{ entity }}</a>
+  {% endfor %}
+</div>
+{# and remove buttons inside preview iframe... #}
+<script>
+document.querySelector("iframe").addEventListener( "load", function(e) {
+  return;
+  var iframe = document.querySelector("iframe");
+  var inner = iframe.contentDocument || iframe.contentWindow.document;
+  var divs = inner.getElementsByClassName('auth-button-div');
+  if (divs) divs[0].parentNode.removeChild(divs[0]);
+  //var divs = inner.getElementsByClassName('auth-flashes');
+  //if (divs) divs[0].parentNode.removeChild(divs[0]);
+  });
+</script>
