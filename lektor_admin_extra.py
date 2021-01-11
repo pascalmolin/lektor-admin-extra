@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from lektor.pluginsystem import Plugin
 from flask import Blueprint, \
                   current_app, \
                   url_for, \
                   render_template
+from lektor.pluginsystem import Plugin
+from lektor.context import get_ctx
 from lektor.admin.modules import serve, dash
 
 utilsbp = Blueprint('utils', __name__,
@@ -11,10 +12,6 @@ utilsbp = Blueprint('utils', __name__,
                            static_folder='static',
                            template_folder='templates'
                            )
-
-@utilsbp.route('/help')
-def help():
-    return render_template('help.html')
 
 def add_content(contents, extra_routes=[]):
     """
@@ -42,15 +39,28 @@ class AdminExtraPlugin(Plugin):
     name = 'admin-extra'
     description = u'Add buttons on lektor admin pages.'
     right_buttons = { 'serve' : [], 'dash': [] }
+    help_data = {
+            'index': []
+            }
     bp = utilsbp
 
+    def emit(self, event, **kwargs):
+        """ lektor bug, now fixed #859 """
+        return self.env.plugin_controller.emit(self.id + "-" + event, **kwargs)
+
     def on_setup_env(self, *args, **extra):
+
+        config = self.get_config()
+        help_dir = config.get('help_pages', None)
 
         @serve.bp.before_app_first_request
         def setup_blueprint():
             app = current_app
             app.register_blueprint(utilsbp)
-            self.add_button( url_for('utils.help'), 'help', '?' )
+            if help_dir is not None:
+                self.add_button(help_dir, 'help', '?', index=0 )
+            else:
+                self.add_button( url_for('utils.help'), 'help', '?', index=0 )
 
         @serve.bp.after_request
         #pylint: disable=unused-variable
@@ -68,15 +78,25 @@ class AdminExtraPlugin(Plugin):
                 response.set_data(add_content(response.get_data(),self.buttons('dash')))
             return response
 
+        @utilsbp.route('/help')
+        def help():
+            pad = self.env.new_pad()
+            return render_template('help.html', this=self.help_data, site=pad)
+            #return self.env.render_template('help.html', this=self.help_data)
+
     def buttons(self, bp, **kwargs):
         return [ b for b,f in self.right_buttons[bp] if f is None or f(**kwargs) ]
 
-    def add_button(self, route, title, html_entity, bp=['serve','dash'], ignore = None):
+    def add_button(self, route, title, html_entity, bp=['serve','dash'], ignore = None, index=None):
+        print("register button %s -> %s"%(title, route))
         for b in bp:
-            self.right_buttons[b].append( ((route, title, html_entity), ignore) )
+            if index is None or index > len(self.right_buttons[b]):
+                self.right_buttons[b].append( ((route, title, html_entity), ignore) )
+            else:
+                self.right_buttons[b].insert(index, ((route, title, html_entity), ignore) )
     def add_serve_button(self, *args, **kwargs):
         self.add_button(*args, bp=['serve'], **kwargs)
     def add_dash_button(self, *args, **kwargs):
         self.add_button(*args, bp=['dash'], **kwargs)
-
-
+    def add_help_page(self, url, item):
+        self.help_data['index'].append( (url, item) )

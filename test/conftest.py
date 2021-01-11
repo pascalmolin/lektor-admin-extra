@@ -92,13 +92,6 @@ def server(lektorproject, port):
     print("[HALT LEKTOR SERVER]")
     server.kill()
     
-#def login(name='test',**kwargs):
-#    session = BaseUrlSession(base_url='http://localhost:%d'%PORT)
-#    rv = session.post('/auth/login',
-#            data = dict( username=name, password=name,**kwargs))
-#    yield session
-#    session.close()
-
 def login(client, name, **kwargs):
     password = kwargs.pop('password',name)
     url = kwargs.pop('url', '/admin/root/edit')
@@ -131,7 +124,7 @@ def blog(server):
 
 @pytest.fixture(scope='function')
 def test(server):
-    session = BaseUrlSession(base_url='http://localhost:%d'%PORT)
+    session = BaseUrlSession(base_url=server.base_url)
     login(session, 'test')
     yield session
     session.close()
