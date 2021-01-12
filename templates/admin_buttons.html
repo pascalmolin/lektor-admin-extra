@@ -5,13 +5,16 @@
 </div>
 {# FIXME: try to remove buttons inside preview iframe... #}
 <script>
-document.querySelector("iframe").addEventListener( "load", function(e) {
-  return;
-  var iframe = document.querySelector("iframe");
-  var inner = iframe.contentDocument || iframe.contentWindow.document;
-  var divs = inner.getElementsByClassName('auth-button-div');
+/* https://stackoverflow.com/questions/326069 */
+function inIframe () {
+    try {
+        return window.self !== window.top;
+    } catch (e) {
+        return true;
+    }
+}
+if (inIframe()) {
+  var divs = document.getElementsByClassName('auth-button-div');
   if (divs) divs[0].parentNode.removeChild(divs[0]);
-  //var divs = inner.getElementsByClassName('auth-flashes');
-  //if (divs) divs[0].parentNode.removeChild(divs[0]);
-  });
+}
 </script>
