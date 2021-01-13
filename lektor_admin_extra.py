@@ -57,6 +57,7 @@ class AdminExtraPlugin(Plugin):
         def setup_blueprint():
             app = current_app
             app.register_blueprint(utilsbp)
+            # only if no help pages
             if help_dir is not None:
                 self.add_button(help_dir, 'help', '?', index=0 )
             else:

@@ -14,7 +14,7 @@
     {% with prefix = '/admin-pages' %}
     {% for page in site.get(prefix).children.include_undiscoverable(true) %}
     {{ page }}
-    <li><a href="{{ page.path }}">{{ page.title }}</a></li>
+    <li><a href="{{ page.path }}/">{{ page.title }}</a></li>
     <li><a href="../{{ page.path[1:] }}">{{ page.title }}</a></li>
     <li><a href="{{ page.path[13:] }}">{{ page.title }}</a></li>
     <li><a href="./{{ page.path[13:] }}">{{ page.title }}</a></li>
