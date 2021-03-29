@@ -17,18 +17,19 @@ setup(
     author='Pascal Molin',
     author_email='molin.maths@gmail.com',
     description=description,
-    keywords='Lektor plugin',
+    keywords='Lektor plugin admin help',
     license='MIT',
     long_description=readme,
     long_description_content_type='text/markdown',
     name='lektor-admin-extra',
     packages=find_packages(),
     py_modules=['lektor_admin_extra'],
-    # url='[link to your repository]',
+    url='http://github.com/pascalmolin/lektor-admin-extra',
     version='0.1',
     classifiers=[
         'Framework :: Lektor',
         'Environment :: Plugins',
+        'License :: OSI Approved :: MIT License',
     ],
     entry_points={
         'lektor.plugins': [

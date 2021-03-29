@@ -4,7 +4,6 @@ from flask import Blueprint, \
                   url_for, \
                   render_template
 from lektor.pluginsystem import Plugin
-from lektor.context import get_ctx
 from lektor.admin.modules import serve, dash
 
 utilsbp = Blueprint('utils', __name__,
@@ -13,7 +12,7 @@ utilsbp = Blueprint('utils', __name__,
                            template_folder='templates'
                            )
 
-def add_content(contents, extra_routes=[]):
+def add_content(contents, extra_routes=None):
     """
     insert buttons in html pages
 
@@ -48,7 +47,15 @@ class AdminExtraPlugin(Plugin):
         """ lektor bug, now fixed #859 """
         return self.env.plugin_controller.emit(self.id + "-" + event, **kwargs)
 
+    #pylint: disable=unused-variable
     def on_setup_env(self, *args, **extra):
+        """
+        initialize routes and buttons
+        top help page redirects to the directory
+        under self.get_config().get('help_pages')
+        (which default to /admin-pages)
+        or a default help page.
+        """
 
         config = self.get_config()
         help_dir = config.get('help_pages', None)
@@ -57,7 +64,7 @@ class AdminExtraPlugin(Plugin):
         def setup_blueprint():
             app = current_app
             app.register_blueprint(utilsbp)
-            # only if no help pages
+            # only if no help pages defined
             if help_dir is not None:
                 self.add_button(help_dir, 'help', '?', index=0 )
             else:
@@ -80,15 +87,16 @@ class AdminExtraPlugin(Plugin):
             return response
 
         @utilsbp.route('/help')
+        #pylint: disable=unused-variable
         def help():
             pad = self.env.new_pad()
-            return render_template('help.html', this=self.help_data, site=pad)
+            return render_template('help.html', this=self.help_data, site=pad, help_root=help_dir)
             #return self.env.render_template('help.html', this=self.help_data)
 
     def buttons(self, bp, **kwargs):
         return [ b for b,f in self.right_buttons[bp] if f is None or f(**kwargs) ]
 
-    def add_button(self, route, title, html_entity, bp=['serve','dash'], ignore = None, index=None):
+    def add_button(self, route, title, html_entity, bp=['serve','dash'], ignore=None, index=None):
         print("register button %s -> %s"%(title, route))
         for b in bp:
             if index is None or index > len(self.right_buttons[b]):

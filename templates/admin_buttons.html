@@ -1,7 +1,9 @@
 <div class="auth-button-div">
+  {% if buttons %}
   {% for (url, title, entity) in buttons %}
   <a href="{{ url }}" title="{{ title }}">{{ entity }}</a>
   {% endfor %}
+  {% endif %}
 </div>
 {# FIXME: try to remove buttons inside preview iframe... #}
 <script>

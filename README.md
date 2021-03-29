@@ -1,6 +1,6 @@
 # admin-extra
 
-Add facilities for the development server.
+Add facilities for the lektor development server.
 
 ## Help pages
 

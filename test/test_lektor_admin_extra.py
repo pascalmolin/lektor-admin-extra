@@ -51,15 +51,16 @@ def test_webclient_add_serve_button(env, webclient):
 def test_webclient_add_dash_button(env, webclient):
     from lektor.pluginsystem import get_plugin
     plugin = get_plugin('admin-extra', env)
-    plugin.add_dash_button('/devnull', 'foobar', 'F')
+
+    plugin.add_dash_button('/devnull', 'Rnd0m', 'F')
 
     rv = webclient.get('/')
     print(rv.data)
-    assert b'foobar' not in rv.data
+    assert b'Rnd0m' not in rv.data
 
     rv = webclient.get('/admin/edit')
     print(rv.data)
-    assert b'foobar' in rv.data
+    assert b'Rnd0m' in rv.data
 
 def test_server_started(anonymous):
     rv = anonymous.get('/', timeout=0.1)
@@ -75,6 +76,5 @@ def test_static_file(anonymous):
 
 def test_help_page(anonymous):
     rv = anonymous.get('/admin-pages/help', timeout=0.1)
-    assert '<body>' in rv.text
-
+    assert 'Aide' in rv.text
 

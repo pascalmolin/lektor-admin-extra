@@ -2,16 +2,20 @@
 {% block box %}
 <h1>Aide</h1>
 <div class="container">
+    {% if this.index %}
     <h2>Rubriques</h2>
     <ul>
         {% for url, item in this.index %}
         <li><a href="{{ url }}">{{ item }}</a></li>
         {% endfor %}
     </ul>
-    {% if site.get('/admin-pages') %}
+    {% else %}
+    Aucune page d'aide n'est enregistrée.
+    {% endif %}
+    {% if help_root and site.get(help_root) %}
     <h2>Documentation</h2>
     <ul>
-    {% with prefix = '/admin-pages' %}
+    {% with prefix = help_root %}
     {% for page in site.get(prefix).children.include_undiscoverable(true) %}
     {{ page }}
     <li><a href="{{ page.path }}/">{{ page.title }}</a></li>
