@@ -6,7 +6,7 @@ from flask import Blueprint, \
 from lektor.pluginsystem import Plugin
 from lektor.admin.modules import serve, dash
 
-utilsbp = Blueprint('utils', __name__,
+utilsbp = Blueprint('admin_utils', __name__,
                            url_prefix='/admin-pages',
                            static_folder='static',
                            template_folder='templates'
@@ -68,7 +68,7 @@ class AdminExtraPlugin(Plugin):
             if help_dir is not None:
                 self.add_button(help_dir, 'help', '?', index=0 )
             else:
-                self.add_button( url_for('utils.help'), 'help', '?', index=0 )
+                self.add_button( url_for('admin_utils.help'), 'help', '?', index=0 )
 
         @serve.bp.after_request
         #pylint: disable=unused-variable

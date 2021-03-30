@@ -11,13 +11,25 @@ from urllib.parse import urljoin
 from configparser import ConfigParser
 
 def pytest_addoption(parser):
-    parser.addini('project', 'path of a the lektor test project')
-    parser.addini('packages', 'plugins path to add', 'pathlist')
+    parser.addoption("--project", action="store")
+    parser.addini('project', 'path or git repo of the lektor test project')
+    parser.addoption("--branch", action="append")
+    parser.addini('branch', 'git branches to checkout', 'linelist', default=['master'])
+    parser.addoption("--package", action="append")
+    parser.addini('packages', 'plugins path to add', 'linelist') # dunno how pathlist is parsed
+    parser.addoption("--port", action="store")
     parser.addini('port', 'http server port', default='5787')
+
+def get_config(config, name):
+    v = config.getoption(name)
+    if v is None:
+        v = config.getini(name)
+    print(name, v)
+    return v
 
 @pytest.fixture(scope='session')
 def project_path(request):
-    return request.config.getini('project')
+    return get_config(request.config, 'project')
 
 @pytest.fixture(scope='session')
 def port(request):
@@ -27,25 +39,39 @@ def port(request):
 def packages(request):
     return request.config.getini('packages')
 
+def git_clone(project_path, output_path, branchname='master'):
+    subprocess.run(
+        ["git", "clone",
+            "--single-branch", "--branch", branchname,
+            "--recurse-submodules",
+            project_path ],
+        check=True,
+        cwd = output_path
+    )
+
+def pytest_generate_tests(metafunc):
+    branches = get_config(metafunc.config,'branch')
+    if 'branchname' in metafunc.fixturenames:
+        metafunc.parametrize("branchname", branches, scope='session')
 
 @pytest.fixture(scope='session')
-def lektorproject(project_path, packages):
-    try:
-        output_path = tempfile.mkdtemp()
-        print(output_path)
-        # copy main repo
-        print(project_path)
-        shutil.copytree(project_path, output_path, dirs_exist_ok=True)
-        # add local modifications
-        if os.path.isdir('test/site'):
-            shutil.copytree('test/site', output_path, dirs_exist_ok=True)
-        # add packages and current plugin
-        testdir = shutil.ignore_patterns('test')
-        for p in packages:
-            shutil.copytree(p, os.path.join(output_path,'packages/'), ignore = testdir, dirs_exist_ok=True)
-        shutil.copytree('.', os.path.join(output_path,'packages/lektor-admin-utils'), ignore = testdir, dirs_exist_ok=True)
-    except (OSError, IOError) as e:
-        pytest.exit('FATAL: could not copy test site directory. %s', e) # error
+def lektorproject(project_path, branchname, packages):
+
+    output_path = tempfile.mkdtemp()
+    print('OUT: ', output_path)
+
+    # copy main repo
+    print('CLONE %s to %s'%(project_path, output_path))
+    git_clone(project_path, output_path, branchname)
+    name = os.path.basename(os.path.normpath(project_path))
+    output_path = os.path.join(output_path, name)
+    packages_path = os.path.join(output_path,'packages')
+    os.mkdir(packages_path)
+    for p in packages + [ os.getcwd() ]:
+        print('CLONE package %s to %s'%(p,packages_path))
+        p = os.path.normpath(p)
+        git_clone(p, packages_path)
+    print('OUTPUT PATH = %s'%output_path)
 
     yield output_path
 
@@ -80,7 +106,7 @@ def server(lektorproject, port):
     print("[START LEKTOR SERVER]")
     server = subprocess.Popen(["lektor", "server", "-p %d"%port], cwd = lektorproject)
     server.base_url = 'http://localhost:%d'%port
-    time.sleep(4)
+    time.sleep(5)
     #while True:
     #    try:
     #        requests.get(URL+'/', timeout=.2)
@@ -91,7 +117,7 @@ def server(lektorproject, port):
     yield server
     print("[HALT LEKTOR SERVER]")
     server.kill()
-    
+
 def login(client, name, **kwargs):
     password = kwargs.pop('password',name)
     url = kwargs.pop('url', '/admin/root/edit')
@@ -105,6 +131,13 @@ def logout(client, **kwargs):
 @pytest.fixture(scope='function')
 def anonymous(server):
     session = BaseUrlSession(base_url=server.base_url)
+    yield session
+    session.close()
+
+@pytest.fixture(scope='function')
+def view(server):
+    session = BaseUrlSession(base_url=server.base_url)
+    login(session, 'view')
     yield session
     session.close()
 
@@ -123,9 +156,9 @@ def blog(server):
     session.close()
 
 @pytest.fixture(scope='function')
-def test(server):
+def draft(server):
     session = BaseUrlSession(base_url=server.base_url)
-    login(session, 'test')
+    login(session, 'draft')
     yield session
     session.close()
 

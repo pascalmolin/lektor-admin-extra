@@ -7,7 +7,7 @@ def test_project(lektorproject):
         #dirnames[:] = [ d for d in dirnames if d[0] != '.' ]
         dirnames[:] = [ d for d in dirnames if d[0] != '.' ]
         print(dirnames, files)
-    assert os.path.exists(os.path.join(lektorproject,'packages/lektor-admin-utils'))
+    assert os.path.exists(os.path.join(lektorproject,'packages/lektor-admin-extra'))
 
 def test_webclient_index(webclient):
     rv = webclient.get('/')
