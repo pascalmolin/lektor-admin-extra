@@ -98,7 +98,6 @@ class BaseUrlSession(requests.Session):
         """Create the URL based off this partial path."""
         return urljoin(self.base_url, url)
 
-
 @pytest.fixture(scope='module')
 def server(lektorproject, port):
 
@@ -162,8 +161,12 @@ def draft(server):
     yield session
     session.close()
 
+### API
+
 @pytest.fixture(scope='module')
-def project(request, lektorproject):
+def project(lektorproject, branchname):
+    if branchname != 'lektor-admin-extra':
+        pytest.skip('already tested')
     from lektor.project import Project
     return Project.from_path(lektorproject)
 
@@ -179,24 +182,23 @@ def pad(request, env):
 
 @pytest.fixture(scope='module')
 def webui(request, env):
+
     from lektor.admin.webui import WebUI
     output_path = tempfile.mkdtemp()
 
-    def cleanup():
-        try:
-            shutil.rmtree(output_path)
-        except (OSError, IOError):
-            pass
-
-    request.addfinalizer(cleanup)
-
-    return WebUI(env,
+    yield WebUI(env,
             debug=True,
             output_path=output_path)
+    try:
+        shutil.rmtree(output_path)
+    except (OSError, IOError):
+        pass
+
 
 @pytest.fixture(scope='module')
 def webclient(webui):
     webui.config['TESTING'] = True
+    print('Starting up client')
     with webui.test_client() as client:
         yield client
-
+    print('Shutting down client')
