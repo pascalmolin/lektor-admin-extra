@@ -29,6 +29,12 @@ def get_config(config, name):
 
 @pytest.fixture(scope='session')
 def project_path(request):
+    """
+    Warning: do not put .git after github repo
+    pytest --project='https://github.com/pascalmolin/lektor-test-site'
+    instead of
+    pytest --project='https://github.com/pascalmolin/lektor-test-site.git'
+    """
     return get_config(request.config, 'project')
 
 @pytest.fixture(scope='session')
