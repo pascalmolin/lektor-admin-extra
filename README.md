@@ -1,6 +1,12 @@
 # admin-extra
 
-Add facilities for the lektor development server.
+This plugin adds buttons and messages facilities to the
+[lektor](https://www.getlektor.com/) development server
+and admin panel.
+
+## Flash messages
+
+Flask flash messages are displayed on top of the pages.
 
 ## Help pages
 
@@ -17,9 +23,31 @@ If ``content/admin-pages`` is not found, the default
 When writing ``admin-pages``, consider extending the default
 ``template/help.html``.
 
-Add extra buttons and messages to lektor admin panel.
+### Adding buttons via configuration
 
-## Adding custom buttons
+Warning: in fact this is not yet implemented.
+
+In the file ``configs/admin_extra.ini``
+with the following syntax
+```
+[button.help]
+url = /admin-pages/
+tooltip = 
+html = ?
+[button.logout]
+url = /logout
+tooltip = logout
+html = x
+index = 0
+scope = dash
+```
+
+Use ``scope=server`` to display the button only on display mode,
+or ``scope=dash`` to show it only in admin panel (default both)
+
+Use ``index=1`` to show the button in position 1 (index start at 0).
+
+## Adding buttons with plugins
 
 Besides the default ``?`` help button, the plugin makes it possible
 to register other links. For example, the ``lektor-login``
@@ -45,6 +73,7 @@ started. An option is to register under ``before_app_first_request``
             admin_extra.add_button( '/secret/url', 'hidden diary', ':-/' )
 ```
 
-## Adding help pages
+## How it works
 
-All 
+The plugin uses the flask ``after_request`` entrypoint to inject extra html
+in all served pages.

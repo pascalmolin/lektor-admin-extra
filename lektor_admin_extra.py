@@ -60,6 +60,14 @@ class AdminExtraPlugin(Plugin):
         config = self.get_config()
         help_dir = config.get('help_pages', None)
 
+        for k,v in config.section_as_dict('button'):
+            url = v.get('url')
+            html = v.get('html')
+            title = v.get('title')
+            index = v.get('index',None)
+            scope = [s for s in v.get('scope').split(',') if s in ['serve','dash']]
+            self.add_button(url, title, html, scope, index=index)
+
         @serve.bp.before_app_first_request
         def setup_blueprint():
             app = current_app
