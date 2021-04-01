@@ -10,6 +10,19 @@ from requests import Session
 from urllib.parse import urljoin
 from configparser import ConfigParser
 
+def onlybranch(branch):
+    def inner(func):
+        def wrapped(*args, **kwargs):
+            if pytest.current_branch != branch:
+                pytest.skip()
+            return func(*args, **kwargs)
+        return wrapped
+    return inner
+
+def pytest_configure(config):
+    pytest.current_branch = None
+    pytest.onlybranch = onlybranch
+
 def pytest_addoption(parser):
     parser.addoption("--project", action="store")
     parser.addini('project', 'path or git repo of the lektor test project')
@@ -63,6 +76,8 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope='session')
 def lektorproject(project_path, branchname, packages):
 
+    pytest.current_branch = branchname
+
     output_path = tempfile.mkdtemp()
     print('OUT: ', output_path)
 
@@ -79,7 +94,7 @@ def lektorproject(project_path, branchname, packages):
         git_clone(p, packages_path)
     print('OUTPUT PATH = %s'%output_path)
 
-    yield output_path
+    yield { 'path' : output_path, 'branch' : branchname }
 
     try:
         shutil.rmtree(output_path)
@@ -107,9 +122,10 @@ class BaseUrlSession(requests.Session):
 @pytest.fixture(scope='module')
 def server(lektorproject, port):
 
+    path = lektorproject['path']
     servercmd = 'lektor server -p %d'%port
     print("[START LEKTOR SERVER]")
-    server = subprocess.Popen(["lektor", "server", "-p %d"%port], cwd = lektorproject)
+    server = subprocess.Popen(["lektor", "server", "-p %d"%port], cwd = path)
     server.base_url = 'http://localhost:%d'%port
     time.sleep(5)
     #while True:
@@ -170,11 +186,11 @@ def draft(server):
 ### API
 
 @pytest.fixture(scope='module')
-def project(lektorproject, branchname):
-    if branchname != 'lektor-admin-extra':
-        pytest.skip('already tested')
+def project(lektorproject):
+    #if lektorproject['branch'] != 'lektor-admin-extra':
+    #    pytest.skip('already tested')
     from lektor.project import Project
-    return Project.from_path(lektorproject)
+    return Project.from_path(lektorproject['path'])
 
 @pytest.fixture(scope='module')
 def env(request, project):

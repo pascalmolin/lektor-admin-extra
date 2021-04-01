@@ -4,19 +4,22 @@ import os
 @pytest.mark.project
 def test_project(lektorproject):
     print(lektorproject)
-    for (dirpath, dirnames, files) in os.walk(lektorproject):
+    path = lektorproject['path']
+    for (dirpath, dirnames, files) in os.walk(path):
         #dirnames[:] = [ d for d in dirnames if d[0] != '.' ]
         dirnames[:] = [ d for d in dirnames if d[0] != '.' ]
         print(dirnames, files)
-    assert os.path.exists(os.path.join(lektorproject,'packages/lektor-admin-extra'))
+    assert os.path.exists(os.path.join(path,'packages/lektor-admin-extra'))
 
 @pytest.mark.api
+@pytest.onlybranch('lektor-admin-extra')
 def test_webclient_index(webclient):
     rv = webclient.get('/')
     print(rv.data)
     assert b'<body>' in rv.data
 
 @pytest.mark.api
+@pytest.onlybranch('lektor-admin-extra')
 def test_webclient_buttons(webclient):
     rv = webclient.get('/')
     assert b'auth-button-div' in rv.data
@@ -25,6 +28,7 @@ def test_webclient_buttons(webclient):
 # add route dynamically
 
 @pytest.mark.api
+@pytest.onlybranch('lektor-admin-extra')
 def test_webclient_add_button(env, webclient):
     from lektor.pluginsystem import get_plugin
     plugin = get_plugin('admin-extra', env)
@@ -40,6 +44,7 @@ def test_webclient_add_button(env, webclient):
     assert b'zorglub' in rv.data
 
 @pytest.mark.api
+@pytest.onlybranch('lektor-admin-extra')
 def test_webclient_add_serve_button(env, webclient):
     from lektor.pluginsystem import get_plugin
     plugin = get_plugin('admin-extra', env)
@@ -54,6 +59,7 @@ def test_webclient_add_serve_button(env, webclient):
     assert b'albatros' not in rv.data
 
 @pytest.mark.api
+@pytest.onlybranch('lektor-admin-extra')
 def test_webclient_add_dash_button(env, webclient):
     from lektor.pluginsystem import get_plugin
     plugin = get_plugin('admin-extra', env)
@@ -88,3 +94,9 @@ def test_help_page(anonymous):
     rv = anonymous.get('/admin-pages/help', timeout=0.1)
     assert 'Aide' in rv.text
 
+@pytest.mark.server
+def test_config_button(anonymous):
+    rv = anonymous.get('/', timeout=0.1)
+    assert 'tooltip' in rv.text
+    rv = anonymous.get('/admin', timeout=0.1)
+    assert 'tooltip' in rv.text
