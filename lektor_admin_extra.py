@@ -41,6 +41,7 @@ class AdminExtraPlugin(Plugin):
     help_data = {
             'index': []
             }
+    help_dir = None
     bp = utilsbp
 
     def emit(self, event, **kwargs):
@@ -57,24 +58,16 @@ class AdminExtraPlugin(Plugin):
         or a default help page.
         """
 
-        config = self.get_config()
-        help_dir = config.get('help_pages', None)
+        self.parse_config()
 
-        for k,v in config.section_as_dict('button'):
-            url = v.get('url')
-            html = v.get('html')
-            title = v.get('title')
-            index = v.get('index',None)
-            scope = [s for s in v.get('scope').split(',') if s in ['serve','dash']]
-            self.add_button(url, title, html, scope, index=index)
 
         @serve.bp.before_app_first_request
         def setup_blueprint():
             app = current_app
             app.register_blueprint(utilsbp)
             # only if no help pages defined
-            if help_dir is not None:
-                self.add_button(help_dir, 'help', '?', index=0 )
+            if self.help_dir is not None:
+                self.add_button(self.help_dir, 'help', '?', index=0 )
             else:
                 self.add_button( url_for('admin_utils.help'), 'help', '?', index=0 )
 
@@ -98,7 +91,7 @@ class AdminExtraPlugin(Plugin):
         #pylint: disable=unused-variable
         def help():
             pad = self.env.new_pad()
-            return render_template('help.html', this=self.help_data, site=pad, help_root=help_dir)
+            return render_template('help.html', this=self.help_data, site=pad, help_root=self.help_dir)
             #return self.env.render_template('help.html', this=self.help_data)
 
     def buttons(self, bp, **kwargs):
@@ -117,3 +110,20 @@ class AdminExtraPlugin(Plugin):
         self.add_button(*args, bp=['dash'], **kwargs)
     def add_help_page(self, url, item):
         self.help_data['index'].append( (url, item) )
+
+    def parse_config(self):
+        """ register buttons defined in configs/admin-extra.ini """
+        config = self.get_config()
+        self.help_dir = config.get('help_pages', None)
+        prefix = 'button.'
+        button_names = [ s[len(prefix):] for s in config.sections() if s[:len(prefix)] == prefix ]
+        for name in button_names:
+            print(name)
+            get = lambda k: config.get(prefix+name+'.'+k,None)
+            (url, html, title, index) = map(get, ['url','html','title', 'index'])
+            scope = ['serve','dash']
+            if get('scope'):
+                scope = [s for s in get('scope').split(',') if s in ['serve','dash']]
+            self.add_button(url, title, html, bp=scope, index=index)
+
+
