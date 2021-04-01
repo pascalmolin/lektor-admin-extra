@@ -98,7 +98,7 @@ class AdminExtraPlugin(Plugin):
         return [ b for b,f in self.right_buttons[bp] if f is None or f(**kwargs) ]
 
     def add_button(self, route, title, html_entity, bp=['serve','dash'], ignore=None, index=None):
-        print("register button %s -> %s"%(title, route))
+        print("[admin-extra] register button %s -> %s"%(title, route))
         for b in bp:
             if index is None or index > len(self.right_buttons[b]):
                 self.right_buttons[b].append( ((route, title, html_entity), ignore) )
@@ -118,7 +118,6 @@ class AdminExtraPlugin(Plugin):
         prefix = 'button.'
         button_names = [ s[len(prefix):] for s in config.sections() if s[:len(prefix)] == prefix ]
         for name in button_names:
-            print(name)
             get = lambda k: config.get(prefix+name+'.'+k,None)
             (url, html, title, index) = map(get, ['url','html','title', 'index'])
             scope = ['serve','dash']

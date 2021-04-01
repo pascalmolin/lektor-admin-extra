@@ -25,18 +25,16 @@ When writing ``admin-pages``, consider extending the default
 
 ### Adding buttons via configuration
 
-Warning: in fact this is not yet implemented.
-
 In the file ``configs/admin_extra.ini``
 with the following syntax
 ```
 [button.help]
 url = /admin-pages/
-tooltip = 
+title = help
 html = ?
 [button.logout]
 url = /logout
-tooltip = logout
+title = logout
 html = x
 index = 0
 scope = dash
