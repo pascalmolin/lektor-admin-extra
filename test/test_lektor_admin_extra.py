@@ -95,6 +95,7 @@ def test_help_page(anonymous):
     assert 'Aide' in rv.text
 
 @pytest.mark.server
+@pytest.onlybranch('lektor-admin-extra')
 def test_config_button(anonymous):
     rv = anonymous.get('/', timeout=0.1)
     assert 'tooltip' in rv.text
